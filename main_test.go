@@ -32,4 +32,3 @@ func TestGetaccesstokenFailure(t *testing.T) {
 		t.Errorf("Error should not be Null, got: %v", err)
 	}
 }
-

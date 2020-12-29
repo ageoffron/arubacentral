@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"regexp"
 
 	"github.com/tkanos/gonfig"
@@ -52,6 +53,9 @@ func init() {
 func loadconfig(configpath string) Configuration {
 	configuration := Configuration{}
 	var err error
+	if _, err := os.Stat(configpath); os.IsNotExist(err) {
+		panic(err)
+	}
 	err = gonfig.GetConf(configpath, &configuration)
 	if err != nil {
 		panic(err)
