@@ -40,38 +40,39 @@ type TokenStruct struct {
 	TokenType    string `json:"token_type,omitempty"`
 }
 
-var flagloglevel string
+var loglevel string
+var configpath string
 
 func init() {
 
-	flag.StringVar(&flagloglevel, "loglevel", "NONE", "loglevel [NONE, INFO, DEBUG]")
+	flag.StringVar(&loglevel, "loglevel", "NONE", "log level [NONE, INFO, DEBUG]")
+	flag.StringVar(&configpath, "configpath", "./config/config.production.json", "path to config file ")
 
+}
+func loadconfig(configpath string) Configuration {
+	configuration := Configuration{}
+	var err error
+	err = gonfig.GetConf(configpath, &configuration)
+	if err != nil {
+		panic(err)
+	}
+	return configuration
 }
 
 func main() {
 	flag.Parse()
 	var err error
-	configuration := Configuration{}
-	err = gonfig.GetConf("./config/config.production.json", &configuration)
-	if err != nil {
-		panic(err)
-	}
+	configuration := loadconfig(configpath)
 
-	clientID := configuration.ClientID
-	username := configuration.Username
-	password := configuration.Password
-	customerID := configuration.CustomerID
-	clientSecret := configuration.ClientSecret
-
-	authToken, err := Gettoken(username, password, clientID)
+	authToken, err := Gettoken(configuration.Username, configuration.Password, configuration.ClientID)
 	if err != nil {
 		panic(err)
 	}
-	authCode, err := getauthcode(customerID, authToken.SessionID, authToken.CsrfToken, clientID)
+	authCode, err := getauthcode(configuration.CustomerID, authToken.SessionID, authToken.CsrfToken, configuration.ClientID)
 	if err != nil {
 		panic(err)
 	}
-	token, err := getaccesstoken(clientID, clientSecret, authCode.AuthCode, customerID)
+	token, err := getaccesstoken(configuration.ClientID, configuration.ClientSecret, authCode.AuthCode, configuration.CustomerID)
 	if err != nil {
 		panic(err)
 	}
@@ -92,7 +93,7 @@ func Gettoken(username string, password string, clientID string) (AuthtokenStruc
 	postdatamapjson, err := json.Marshal(postdatamap)
 	jsonStr := string(postdatamapjson)
 	arubaauthdata := []byte(jsonStr)
-	if flagloglevel == "DEBUG" {
+	if loglevel == "DEBUG" {
 		log.Printf("Authentication user: %v clientID: %v", username, clientID)
 	}
 	url := fmt.Sprintf("https://apigw-prod2.central.arubanetworks.com/oauth2/authorize/central/api/login?client_id=%v", clientID)
@@ -109,7 +110,7 @@ func Gettoken(username string, password string, clientID string) (AuthtokenStruc
 	//fmt.Println("response Status:", resp.Status)
 	//fmt.Println("response Headers:", resp.Header)
 	if resp.Status != "200 OK" {
-		if flagloglevel == "DEBUG" {
+		if loglevel == "DEBUG" {
 			log.Printf("Authentication Error user: %v clientID: %v Response Status: %v", username, clientID, resp.Status)
 		}
 		err = errors.New(resp.Status)
@@ -123,7 +124,7 @@ func Gettoken(username string, password string, clientID string) (AuthtokenStruc
 	sessionidcookie := resp.Header["Set-Cookie"][1]
 	sessionidrgx := regexp.MustCompile(`session=(.*?)\;`)
 	sessionid := sessionidrgx.FindStringSubmatch(sessionidcookie)[1]
-	if flagloglevel == "DEBUG" {
+	if loglevel == "DEBUG" {
 		log.Printf("Authentication user: %v clientID: %v csrftoken: %v ", username, clientID, csrftoken)
 		log.Printf("Authentication user: %v clientID: %v session: %v ", username, clientID, sessionid)
 	}
@@ -139,7 +140,7 @@ func getauthcode(customerID string, sessionID string, csrfToken string, clientID
 	postdataMapJSON, err := json.Marshal(postdataMap)
 	postdataJSONStr := string(postdataMapJSON)
 	postdata := []byte(postdataJSONStr)
-	if flagloglevel == "DEBUG" {
+	if loglevel == "DEBUG" {
 		log.Printf("Authentication customer id: %v", customerID)
 	}
 	url := fmt.Sprintf("https://apigw-prod2.central.arubanetworks.com/oauth2/authorize/central/api?client_id=%v&response_type=code&scope=all", clientID)
@@ -156,7 +157,7 @@ func getauthcode(customerID string, sessionID string, csrfToken string, clientID
 	defer resp.Body.Close()
 
 	if resp.Status != "200 OK" {
-		if flagloglevel == "DEBUG" {
+		if loglevel == "DEBUG" {
 			log.Printf("Authentication Error customerID: %v, sessionID: %v, csrfToken %v, Response Status: %v", customerID, sessionID, csrfToken, resp.Status)
 		}
 		err = errors.New(resp.Status)
@@ -170,14 +171,14 @@ func getauthcode(customerID string, sessionID string, csrfToken string, clientID
 	if err != nil {
 		return AuthcodeStruct{}, err
 	}
-	if flagloglevel == "DEBUG" {
+	if loglevel == "DEBUG" {
 		log.Printf("Authcode: %v", val)
 	}
 	return val, nil
 }
 
 func getaccesstoken(clientID string, clientSecret string, authCode string, customerID string) (TokenStruct, error) {
-	if flagloglevel == "DEBUG" {
+	if loglevel == "DEBUG" {
 		log.Printf("Authentication customer id: %v", customerID)
 	}
 	url := fmt.Sprintf("https://apigw-prod2.central.arubanetworks.com/oauth2/token?client_id=%v&client_secret=%v&grant_type=authorization_code&code=%v", clientID, clientSecret, authCode)
@@ -195,7 +196,7 @@ func getaccesstoken(clientID string, clientSecret string, authCode string, custo
 	defer resp.Body.Close()
 
 	if resp.Status != "200 OK" {
-		if flagloglevel == "DEBUG" {
+		if loglevel == "DEBUG" {
 			log.Printf("Authentication Error clientID: %v, clientSecret: %v, authCode %v, Response Status: %v", clientID, clientSecret, authCode, resp.Status)
 		}
 		err = errors.New(resp.Status)
@@ -209,9 +210,8 @@ func getaccesstoken(clientID string, clientSecret string, authCode string, custo
 	if err != nil {
 		return TokenStruct{}, err
 	}
-	if flagloglevel == "DEBUG" {
+	if loglevel == "DEBUG" {
 		log.Printf("tokens: %v", val)
 	}
 	return val, nil
 }
-

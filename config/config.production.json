@@ -1,7 +1,7 @@
 {
-    "clientID": "",
-    "customerID": "",
-    "clientSecret": "",
-    "username": "",  
-    "password": ""
+    "clientID": "12345",
+    "customerID": "12345",
+    "clientSecret": "12345",
+    "username": "john.doe@gmail.com",  
+    "password": "12345"
 }
