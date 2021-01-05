@@ -1,8 +1,9 @@
 package main
 
 import (
-	"arubacentral/centralrest"
 	"testing"
+
+	"github.com/ageoffron/arubacentral/centralrest"
 )
 
 // TestGettokenBadCreds Test Bad credentials
