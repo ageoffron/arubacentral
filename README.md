@@ -25,8 +25,8 @@ Update the config/config.json
 
 Run client
 ```
-./bin/arubacentral auth
-./bin/arubacentral auth | jq
+./bin/central auth
+./bin/central auth | jq
 
 output:
 {
