@@ -1,4 +1,9 @@
-# A Go client to auth against Aruba Central REST API
+# A Go client to execute commands against the Aruba Central REST API
+```
+
+Support the auth command for now with plans to support get a series of targets
+
+```
 
 ## Installation
 Build 
@@ -7,7 +12,7 @@ make build
 ```
 
 ## Usage
-Update the config/config.production.json
+Update the config/config.json
 ```
 {
     "clientID": "",
@@ -20,25 +25,39 @@ Update the config/config.production.json
 
 Run client
 ```
-./bin/arubacentral_authclient 
-./bin/arubacentral_authclient | jq '.access_token'"
+./bin/arubacentral auth
+./bin/arubacentral auth | jq
 
 output:
 {
-    "access_token":"xxxxxxxxxxxxxxx",
-    "refresh_token":"xxxxxxxxxxxxxx",
-    "token_type":"bearer"
+  "access_token": "xxxxxx",
+  "refresh_token": "xxxxxxxx",
+  "token_type": "bearer"
 }
 ```
 
-Run client with DEBUG level
-```
-./bin/arubacentral_authclient  -loglevel DEBUG
-```
-
 Get help
+
+  ./bin/central -h
+
 ```
-./bin/arubacentral_authclient  -h
+Aruba Central management tool
+
+Aruba Central cli to communicate with Aruba Central REST API
+
+Usage:
+  central [command]
+
+Available Commands:
+  auth        auth against Aruba Central API
+  help        Help about any command
+
+Flags:
+      --config string     config file (default is ./config/config.json) (default "./config/config.json")
+  -h, --help              help for central
+      --loglevel string   log level [NONE, INFO, DEBUG] (default "NONE")
+
+Use "central [command] --help" for more information about a command.
 ```
 
 ## todo

@@ -1,1 +1,4 @@
-./bin/
+bin/*
+config/arubaconfig.json
+config/arubaconfigtoken.json
+
