@@ -1,10 +1,13 @@
 package main
 
-import "testing"
+import (
+	"arubacentral/centralrest"
+	"testing"
+)
 
 // TestGettokenBadCreds Test Bad credentials
 func TestGettokenBadCreds(t *testing.T) {
-	authcode, err := Gettoken("anthony", "fakepassword", "fakeclienid")
+	authcode, err := centralrest.Gettoken("anthony", "fakepassword", "fakeclienid")
 	if err == nil {
 		t.Errorf("Error should not be Null, got: %v", err)
 	}
@@ -19,7 +22,7 @@ func TestGettokenBadCreds(t *testing.T) {
 
 // authCode, err := getauthcode(customerID, authToken.SessionID, authToken.CsrfToken, clientID)
 func TestGetauthcodeFailure(t *testing.T) {
-	_, err := getauthcode("fakecustomerID", "fakeSessionID", "fakeCsrfToken", "fakeclientID")
+	_, err := centralrest.Getauthcode("fakecustomerID", "fakeSessionID", "fakeCsrfToken", "fakeclientID")
 	if err == nil {
 		t.Errorf("Error should not be Null, got: %v", err)
 	}
@@ -27,7 +30,7 @@ func TestGetauthcodeFailure(t *testing.T) {
 
 // token, err := getaccesstoken(clientID, clientSecret, authCode.AuthCode, customerID)
 func TestGetaccesstokenFailure(t *testing.T) {
-	_, err := getaccesstoken("fakeclientID", "fakeclientSecret", "fakeAuthcode", "fakecustomerID")
+	_, err := centralrest.Getaccesstoken("fakeclientID", "fakeclientSecret", "fakeAuthcode", "fakecustomerID")
 	if err == nil {
 		t.Errorf("Error should not be Null, got: %v", err)
 	}

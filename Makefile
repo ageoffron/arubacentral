@@ -1,5 +1,5 @@
 build:
-	go build -o bin/arubacentral_authclient main.go
+	go build -o bin/central main.go
 
 run:
 	go run main.go
