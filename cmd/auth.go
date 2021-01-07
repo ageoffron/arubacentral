@@ -38,20 +38,20 @@ func readTokenConfig() {
 func arubaAuth() centralrest.TokenStruct {
 
 	var err error
-	authToken, err := centralrest.Gettoken(ViperCentralConfig.GetString("username"), ViperCentralConfig.GetString("password"), ViperCentralConfig.GetString("clientID"))
+	authToken, err := centralrest.Gettoken(ViperCentralConfig.GetString("username"), ViperCentralConfig.GetString("password"), ViperCentralConfig.GetString("clientID"), Verbose)
 	if err != nil {
 		panic(err)
 	}
-	authCode, err := centralrest.Getauthcode(ViperCentralConfig.GetString("CustomerID"), authToken.SessionID, authToken.CsrfToken, ViperCentralConfig.GetString("clientID"))
+	authCode, err := centralrest.Getauthcode(ViperCentralConfig.GetString("CustomerID"), authToken.SessionID, authToken.CsrfToken, ViperCentralConfig.GetString("clientID"), Verbose)
 	if err != nil {
 		panic(err)
 	}
-	accesstoken, err := centralrest.Getaccesstoken(ViperCentralConfig.GetString("clientID"), ViperCentralConfig.GetString("ClientSecret"), authCode.AuthCode, ViperCentralConfig.GetString("CustomerID"))
+	accesstoken, err := centralrest.Getaccesstoken(ViperCentralConfig.GetString("clientID"), ViperCentralConfig.GetString("ClientSecret"), authCode.AuthCode, ViperCentralConfig.GetString("CustomerID"), Verbose)
 	if err != nil {
 		panic(err)
 	}
 
-	if loglevel == "DEBUG" {
+	if Verbose {
 		e, err := json.Marshal(accesstoken)
 		if err != nil {
 			panic(err)
@@ -63,7 +63,7 @@ func arubaAuth() centralrest.TokenStruct {
 
 var authCmd = &cobra.Command{
 	Use:   "auth",
-	Short: "auth with Aruba Central API",
+	Short: "auth using secrets from config file",
 	Long: `
             auth using creds and secret from config file`,
 	Args: cobra.ExactArgs(0),

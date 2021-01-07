@@ -10,8 +10,6 @@ import (
 	"regexp"
 )
 
-var loglevel string
-
 // AuthtokenStruct init csrf and session
 type AuthtokenStruct struct {
 	CsrfToken string
@@ -31,17 +29,20 @@ type TokenStruct struct {
 }
 
 // Gettoken Phase 1 auth
-func Gettoken(username string, password string, clientID string) (AuthtokenStruct, error) {
+func Gettoken(username string, password string, clientID string, verbose bool) (AuthtokenStruct, error) {
+	if verbose {
+		log.Printf("Authentication Phase 1...")
+	}
 	postdatamap := make(map[string]string)
 	postdatamap["username"] = username
 	postdatamap["password"] = password
 	postdatamapjson, err := json.Marshal(postdatamap)
 	jsonStr := string(postdatamapjson)
 	arubaauthdata := []byte(jsonStr)
-	if loglevel == "DEBUG" {
+	if verbose {
 		log.Printf("Authentication user: %v clientID: %v", username, clientID)
 	}
-	url := fmt.Sprintf("https://apigw-prod2.central.arubanetworks.com/oauth2/authorize/central/api/login?client_id=%v", clientID)
+	url := fmt.Sprintf("%s/oauth2/authorize/central/api/login?client_id=%v", URIApi, clientID)
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(arubaauthdata))
 	req.Header.Set("Content-Type", "application/json")
 
@@ -55,7 +56,7 @@ func Gettoken(username string, password string, clientID string) (AuthtokenStruc
 	//fmt.Println("response Status:", resp.Status)
 	//fmt.Println("response Headers:", resp.Header)
 	if resp.Status != "200 OK" {
-		if loglevel == "DEBUG" {
+		if verbose {
 			log.Printf("Authentication Error user: %v clientID: %v Response Status: %v", username, clientID, resp.Status)
 		}
 		err = errors.New(resp.Status)
@@ -69,7 +70,7 @@ func Gettoken(username string, password string, clientID string) (AuthtokenStruc
 	sessionidcookie := resp.Header["Set-Cookie"][1]
 	sessionidrgx := regexp.MustCompile(`session=(.*?)\;`)
 	sessionid := sessionidrgx.FindStringSubmatch(sessionidcookie)[1]
-	if loglevel == "DEBUG" {
+	if verbose {
 		log.Printf("Authentication user: %v clientID: %v csrftoken: %v ", username, clientID, csrftoken)
 		log.Printf("Authentication user: %v clientID: %v session: %v ", username, clientID, sessionid)
 	}
@@ -78,7 +79,10 @@ func Gettoken(username string, password string, clientID string) (AuthtokenStruc
 }
 
 // Getauthcode Phase 2 auth
-func Getauthcode(customerID string, sessionID string, csrfToken string, clientID string) (AuthcodeStruct, error) {
+func Getauthcode(customerID string, sessionID string, csrfToken string, clientID string, verbose bool) (AuthcodeStruct, error) {
+	if verbose {
+		log.Printf("Authentication Phase 2...")
+	}
 	var err error
 
 	postdataMap := make(map[string]string)
@@ -86,10 +90,10 @@ func Getauthcode(customerID string, sessionID string, csrfToken string, clientID
 	postdataMapJSON, err := json.Marshal(postdataMap)
 	postdataJSONStr := string(postdataMapJSON)
 	postdata := []byte(postdataJSONStr)
-	if loglevel == "DEBUG" {
+	if verbose {
 		log.Printf("Authentication customer id: %v", customerID)
 	}
-	url := fmt.Sprintf("https://apigw-prod2.central.arubanetworks.com/oauth2/authorize/central/api?client_id=%v&response_type=code&scope=all", clientID)
+	url := fmt.Sprintf("%s/oauth2/authorize/central/api?client_id=%v&response_type=code&scope=all", URIApi, clientID)
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(postdata))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Cookie", fmt.Sprintf("session=%v", sessionID))
@@ -103,7 +107,7 @@ func Getauthcode(customerID string, sessionID string, csrfToken string, clientID
 	defer resp.Body.Close()
 
 	if resp.Status != "200 OK" {
-		if loglevel == "DEBUG" {
+		if verbose {
 			log.Printf("Authentication Error customerID: %v, sessionID: %v, csrfToken %v, Response Status: %v", customerID, sessionID, csrfToken, resp.Status)
 		}
 		err = errors.New(resp.Status)
@@ -117,18 +121,19 @@ func Getauthcode(customerID string, sessionID string, csrfToken string, clientID
 	if err != nil {
 		return AuthcodeStruct{}, err
 	}
-	if loglevel == "DEBUG" {
+	if verbose {
 		log.Printf("Authcode: %v", val)
 	}
 	return val, nil
 }
 
 // Getaccesstoken Phase 3 auth
-func Getaccesstoken(clientID string, clientSecret string, authCode string, customerID string) (TokenStruct, error) {
-	if loglevel == "DEBUG" {
+func Getaccesstoken(clientID string, clientSecret string, authCode string, customerID string, verbose bool) (TokenStruct, error) {
+	if verbose {
+		log.Printf("Authentication Phase 3...")
 		log.Printf("Authentication customer id: %v", customerID)
 	}
-	url := fmt.Sprintf("https://apigw-prod2.central.arubanetworks.com/oauth2/token?client_id=%v&client_secret=%v&grant_type=authorization_code&code=%v", clientID, clientSecret, authCode)
+	url := fmt.Sprintf("%s/oauth2/token?client_id=%v&client_secret=%v&grant_type=authorization_code&code=%v", URIApi, clientID, clientSecret, authCode)
 
 	var emptyData []byte
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(emptyData))
@@ -143,7 +148,7 @@ func Getaccesstoken(clientID string, clientSecret string, authCode string, custo
 	defer resp.Body.Close()
 
 	if resp.Status != "200 OK" {
-		if loglevel == "DEBUG" {
+		if verbose {
 			log.Printf("Authentication Error clientID: %v, clientSecret: %v, authCode %v, Response Status: %v", clientID, clientSecret, authCode, resp.Status)
 		}
 		err = errors.New(resp.Status)
@@ -157,7 +162,7 @@ func Getaccesstoken(clientID string, clientSecret string, authCode string, custo
 	if err != nil {
 		return TokenStruct{}, err
 	}
-	if loglevel == "DEBUG" {
+	if verbose {
 		log.Printf("tokens: %v", val)
 	}
 	return val, nil
