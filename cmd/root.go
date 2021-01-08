@@ -32,17 +32,22 @@ const (
 
 var configpath = []string{"./config/", "$HOME/.config/", "."}
 var configuration = Configuration{}
-var loglevel string
+
+// Verbose true/false
+var Verbose bool
 
 var rootCmd = &cobra.Command{
 	Use:   "central",
-	Short: "Aruba Central management tool",
+	Short: "Aruba Central cli management tool",
 	Long:  description,
 }
 
+var validgetCmdArgs = []string{"devices", "swarms"}
+
 var getCmd = &cobra.Command{
-	Use:   "get",
-	Short: "get",
+	Use:       "get [devices, swarms, aps]",
+	Short:     "get [devices, swarms, aps]",
+	ValidArgs: validgetCmdArgs,
 }
 
 // Execute entry point
@@ -55,8 +60,12 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(loadconfig)
-	rootCmd.PersistentFlags().StringVar(&loglevel, "loglevel", "NONE", "log level [NONE, INFO, DEBUG]")
+	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "verbose output")
 	rootCmd.AddCommand(authCmd)
+	rootCmd.AddCommand(getCmd)
+	getCmd.AddCommand(swarmsCmd)
+	getCmd.AddCommand(devicesCmd)
+	getCmd.AddCommand(apsCmd)
 	rootCmd.DisableSuggestions = false
 	rootCmd.SuggestionsMinimumDistance = 1
 }
